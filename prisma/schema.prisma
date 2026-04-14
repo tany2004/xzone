@@ -1,21 +1,86 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
 generator client {
-    provider = "prisma-client-js"
-    output   = "../generated/prisma"
+  provider = "prisma-client-js"
 }
 
 datasource db {
-    provider = "postgresql"
-    url      = env("DATABASE_URL")
+  provider = "postgresql"
 }
 
-model Post {
-    id        Int      @id @default(autoincrement())
-    name      String
-    createdAt DateTime @default(now())
-    updatedAt DateTime @updatedAt
+enum SeatType {
+  PC
+  PS
+}
 
-    @@index([name])
+enum BookingStatus {
+  PENDING
+  CONFIRMED
+  REJECTED
+  CANCELLED
+}
+
+enum PricingPeriod {
+  DAY
+  NIGHT
+  HOURLY
+}
+
+model Club {
+  id      String  @id @default(uuid())
+  name    String
+  address String
+  phone   String
+
+  halls        Hall[]
+  pricingRules PricingRule[]
+}
+
+model Hall {
+  id       String   @id @default(uuid())
+  clubId   String
+  name     String
+  type     SeatType
+
+  club  Club   @relation(fields: [clubId], references: [id])
+  seats Seat[]
+}
+
+model Seat {
+  id        String   @id @default(uuid())
+  hallId    String
+  label     String
+  seatType  SeatType
+  isBlocked Boolean  @default(false)
+
+  hall     Hall      @relation(fields: [hallId], references: [id])
+  bookings Booking[]
+}
+
+model Booking {
+  id          String        @id @default(uuid())
+  seatId      String
+  bookingCode String        @unique
+  clientName  String
+  clientPhone String
+  startsAt    DateTime
+  endsAt      DateTime
+  status      BookingStatus @default(PENDING)
+  createdAt   DateTime      @default(now())
+
+  seat Seat @relation(fields: [seatId], references: [id])
+}
+
+model PricingRule {
+  id           String        @id @default(uuid())
+  clubId       String
+  seatType     SeatType
+  period       PricingPeriod
+  pricePerHour Decimal       @db.Decimal(10, 2)
+
+  club Club @relation(fields: [clubId], references: [id])
+}
+
+model Admin {
+  id           String @id @default(uuid())
+  login        String @unique
+  passwordHash String
 }

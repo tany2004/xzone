@@ -8,14 +8,78 @@ generator client {
 
 datasource db {
   provider = "postgresql"
-  url      = env("DATABASE_URL")
 }
 
-model Post {
-  id        Int      @id @default(autoincrement())
-  name      String
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+// Администратор
+model Admin {
+  id           Int      @id @default(autoincrement())
+  login        String   @unique
+  passwordHash String
+  createdAt    DateTime @default(now())
+}
 
-  @@index([name])
+// Клуб (два адреса)
+model Club {
+  id      Int    @id @default(autoincrement())
+  name    String
+  address String
+  phone   String
+  halls   Hall[]
+}
+
+// Зал внутри клуба
+model Hall {
+  id     Int    @id @default(autoincrement())
+  name   String // например "Зал 1", "VIP"
+  club   Club   @relation(fields: [clubId], references: [id])
+  clubId Int
+  seats  Seat[]
+}
+
+// Место (ПК или приставка)
+model Seat {
+  id        Int       @id @default(autoincrement())
+  number    Int // номер места в зале
+  type      SeatType  @default(PC)
+  isBlocked Boolean   @default(false) // заблокировано на техобслуживание
+  positionX Int // координата на карте зала
+  positionY Int
+  hall      Hall      @relation(fields: [hallId], references: [id])
+  hallId    Int
+  bookings  Booking[]
+
+  @@unique([hallId, number])
+}
+
+enum SeatType {
+  PC
+  PS
+  XBOX
+}
+
+// Бронирование
+model Booking {
+  id          Int           @id @default(autoincrement())
+  seat        Seat          @relation(fields: [seatId], references: [id])
+  seatId      Int
+  clientName  String
+  clientPhone String
+  startTime   DateTime
+  endTime     DateTime
+  status      BookingStatus @default(ACTIVE)
+  createdAt   DateTime      @default(now())
+}
+
+enum BookingStatus {
+  ACTIVE
+  CANCELLED
+  COMPLETED
+}
+
+// Контент — цены и тексты (хранятся как ключ-значение)
+model ContentBlock {
+  id        Int      @id @default(autoincrement())
+  key       String   @unique // например "price_pc_hourly", "about_text"
+  value     String
+  updatedAt DateTime @updatedAt
 }
