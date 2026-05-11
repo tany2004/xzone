@@ -38,17 +38,28 @@ export type RouterInputs = inferRouterInputs<AppRouter>;
  */
 export type RouterOutputs = inferRouterOutputs<AppRouter>;
 
+// Кастомный логгер, который не выводит ошибки в консоль
+const customLoggerLink = loggerLink({
+  enabled: (op) => {
+    // В разработке показываем только успешные запросы
+    if (process.env.NODE_ENV === "development") {
+      // Не показываем ошибки в консоль
+      if (op.direction === "down" && op.result instanceof Error) {
+        return false;
+      }
+      return true;
+    }
+    return false;
+  },
+});
+
 export function TRPCReactProvider(props: { children: React.ReactNode }) {
   const queryClient = getQueryClient();
 
   const [trpcClient] = useState(() =>
     api.createClient({
       links: [
-        loggerLink({
-          enabled: (op) =>
-            process.env.NODE_ENV === "development" ||
-            (op.direction === "down" && op.result instanceof Error),
-        }),
+        customLoggerLink,
         httpBatchStreamLink({
           transformer: SuperJSON,
           url: getBaseUrl() + "/api/trpc",

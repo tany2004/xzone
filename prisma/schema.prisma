@@ -19,9 +19,14 @@ enum BookingStatus {
 }
 
 enum PricingPeriod {
-  DAY
-  NIGHT
-  HOURLY
+  MORNING      // 08:00–12:00
+  DAY          // 12:00–17:00
+  EVENING      // 17:00–08:00
+  PACK_3H      // Пакет 3 часа
+  PACK_5H      // Пакет 5 часов
+  NIGHT_WEEKDAY   // Ночной будни 21:00–07:30
+  NIGHT_WEEKEND   // Ночной выходные 21:00–07:30
+  HOURLY       // PS5 почасовой
 }
 
 model Club {
@@ -64,9 +69,22 @@ model Booking {
   startsAt    DateTime
   endsAt      DateTime
   status      BookingStatus @default(PENDING)
+  totalPrice  Int
   createdAt   DateTime      @default(now())
 
   seat Seat @relation(fields: [seatId], references: [id])
+}
+
+model Blacklist {
+  id          String   @id @default(uuid())
+  clientPhone String   @unique
+  clientName  String   // последнее известное имя
+  reason      String?  // комментарий администратора
+  noShowCount Int      @default(1) // сколько раз не пришёл
+  addedAt     DateTime @default(now())
+  addedBy     String   // login администратора
+
+  admin Admin @relation(fields: [addedBy], references: [id])
 }
 
 model PricingRule {
@@ -83,4 +101,6 @@ model Admin {
   id           String @id @default(uuid())
   login        String @unique
   passwordHash String
+
+  blacklist    Blacklist[]
 }

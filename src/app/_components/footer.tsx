@@ -13,12 +13,12 @@ const clubs = [
 
 export default function Footer() {
   return (
-    <footer className="border-t border-white/10 bg-zinc-900">
+    <footer className="border-t border-[#1e1540] bg-[#120e24]">
       <div className="mx-auto max-w-6xl px-4 py-10">
         <div className="grid grid-cols-1 gap-8 md:grid-cols-3">
           <div>
             <p className="text-lg font-bold text-white">XZone</p>
-            <p className="mt-2 text-sm text-zinc-400">
+            <p className="mt-2 text-sm text-violet-200/60">
               Компьютерный клуб. Работаем круглосуточно.
             </p>
           </div>
@@ -26,10 +26,10 @@ export default function Footer() {
           {clubs.map((club) => (
             <div key={club.name}>
               <p className="font-medium text-white">{club.name}</p>
-              <p className="mt-2 text-sm text-zinc-400">{club.address}</p>
+              <p className="mt-2 text-sm text-violet-200/60">{club.address}</p>
               <a
                 href={`tel:${club.phone}`}
-                className="mt-1 block text-sm text-zinc-400 transition-colors hover:text-white">
+                className="mt-1 block text-sm text-violet-200/60 transition-colors hover:text-white">
               
                 {club.phone}
               </a>
@@ -37,7 +37,7 @@ export default function Footer() {
           ))}
         </div>
 
-        <div className="mt-8 border-t border-white/10 pt-6 text-center text-xs text-zinc-500">
+        <div className="mt-8 border-t border-[#1e1540] pt-6 text-center text-xs text-violet-200/60">
           © {new Date().getFullYear()} XZone. Все права защищены.
         </div>
       </div>

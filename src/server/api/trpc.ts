@@ -6,11 +6,12 @@
  * TL;DR - This is where all the tRPC server stuff is created and plugged in. The pieces you will
  * need to use are documented accordingly near the end.
  */
-import { initTRPC } from "@trpc/server";
+import { initTRPC, TRPCError  } from "@trpc/server";
 import superjson from "superjson";
 import { ZodError } from "zod";
 
 import { db } from "~/server/db";
+import { verifyToken } from "~/lib/auth";
 
 /**
  * 1. CONTEXT
@@ -25,8 +26,32 @@ import { db } from "~/server/db";
  * @see https://trpc.io/docs/server/context
  */
 export const createTRPCContext = async (opts: { headers: Headers }) => {
+    // Получаем токен из headers (cookies будут автоматически отправлены)
+  const cookieHeader = opts.headers.get('cookie');
+  let admin = null;
+  
+  if (cookieHeader) {
+    // Парсим cookies из заголовка
+    const cookies = Object.fromEntries(
+      cookieHeader.split('; ').map(cookie => {
+        const [name, ...rest] = cookie.split('=');
+        return [name, rest.join('=')];
+      })
+    );
+    
+    const token = cookies['admin_token'];
+    if (token) {
+      const payload = await verifyToken(token);
+      if (payload) {
+        admin = await db.admin.findUnique({
+          where: { id: payload.adminId },
+        });
+      }
+    }
+  }
   return {
     db,
+    admin,
     ...opts,
   };
 };
@@ -96,6 +121,25 @@ const timingMiddleware = t.middleware(async ({ next, path }) => {
 });
 
 /**
+ * Middleware для проверки авторизации администратора
+ */
+const isAdminMiddleware = t.middleware(async ({ ctx, next }) => {
+  if (!ctx.admin) {
+    throw new TRPCError({ 
+      code: 'UNAUTHORIZED', 
+      message: 'You must be logged in as admin' 
+    });
+  }
+  
+  return next({
+    ctx: {
+      ...ctx,
+      admin: ctx.admin,
+    },
+  });
+});
+
+/**
  * Public (unauthenticated) procedure
  *
  * This is the base piece you use to build new queries and mutations on your tRPC API. It does not
@@ -103,3 +147,7 @@ const timingMiddleware = t.middleware(async ({ next, path }) => {
  * are logged in.
  */
 export const publicProcedure = t.procedure.use(timingMiddleware);
+
+export const protectedProcedure = t.procedure
+  .use(timingMiddleware)
+  .use(isAdminMiddleware);

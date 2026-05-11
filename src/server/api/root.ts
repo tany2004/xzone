@@ -1,8 +1,9 @@
 import { createCallerFactory, createTRPCRouter } from "~/server/api/trpc";
 import { clubRouter } from "~/server/api/routers/club";
 import { bookingRouter } from "~/server/api/routers/booking";
-import { contentRouter } from "~/server/api/routers/content";
 import { pricingRouter } from "./routers/pricing";
+import { adminRouter } from "~/server/api/routers/admin";
+import { blacklistRouter } from "./routers/blacklist";
 
 /**
  * This is the primary router for your server.
@@ -12,8 +13,9 @@ import { pricingRouter } from "./routers/pricing";
 export const appRouter = createTRPCRouter({
   club: clubRouter,
   booking: bookingRouter,
-  content: contentRouter,
   pricing: pricingRouter,
+  admin: adminRouter,
+  blacklist: blacklistRouter,
 });
 
 // export type definition of API
